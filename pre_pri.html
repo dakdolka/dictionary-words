@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>ПРЕ / ПРИ — тренажёр</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: 'Courier New', monospace;
+    background: #f9f9f9;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+#wordsContainer {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.word {
+    font-size: 1.8em;
+    margin: 18px 0;
+    position: relative;
+    cursor: pointer;
+}
+
+.letter {
+    display: inline-block;
+    width: 1.3ch;
+    text-align: center;
+    border-bottom: 2px solid gray;
+    margin: 0 1px;
+}
+
+.correct {
+    color: green;
+    border-color: green;
+    font-weight: bold;
+}
+
+.wrong {
+    color: red;
+    border-color: red;
+    font-weight: bold;
+}
+
+.active {
+    background: #fff3a0;
+}
+
+.hiddenInput {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    opacity: 0;
+}
+</style>
+</head>
+<body>
+
+<h1>ПРЕ / ПРИ</h1>
+<div id="wordsContainer"></div>
+
+<script>
+const fixedWords = `
+прИбывать в город
+прЕбывать в городе
+прИзреть сироту
+прЕзирать врага
+прИтворить дверь
+прЕтворить мечту в жизнь
+прИклонить голову (отдохнуть)
+прЕклонить голову/колени (оказать уважение)
+прИдать значение
+прЕдать друга
+прИходящий человек
+прИходящее явление
+прИтерпеться к боли
+прЕтерпеть трудности
+прЕёмник радиосигнала
+прИемник ученика
+прИставить к награде
+светопрЕставление
+прЕставился(человек)
+прИвратник стоял
+прЕвратности судьбы
+прИложить вплотную
+непрЕложная истина
+прИдел в церкви
+прЕдел возможностей
+прЕуменьшать(очень) важность
+прИуменьшать(немного) значение
+прИоритет
+прИвилегия
+прИбаутка
+прИвередливый
+прИгожий
+прИбор
+прИличия
+прИстойно
+прИесться
+прИказ
+прИключение
+прИкорнуть
+прИсяга
+прИтеснять
+прИчина
+прИчуда
+прИтязание
+прИрода
+прИмер
+прИческа
+прИскорбно
+прИволье
+прИцел
+прИмета
+прИверженец
+прИлежный
+прИчиндалы
+прИятный
+прИватный
+прИнцип
+прИмат
+прИмитив
+прИгодный
+прИсниться
+прИсудить
+прИзвание
+прИсмотреть
+прИспособить
+прЕрогатива
+прЕмбула
+прЕпятствие
+прЕпоны
+прЕрия
+прЕзент
+прЕимущество
+прЕисподняя
+прЕгрешение
+прЕнебрегать
+прЕкословить
+прЕпираться
+прЕстол
+прЕвратный
+прЕпинания
+прЕславутый
+прЕследовать
+прЕподаватель
+прЕподнести
+прЕпроводить
+прЕподобный
+прЕткновения камень
+прЕсмыкаться
+прЕпарировать
+прЕлюдия
+прЕмьера
+прЕстиж
+прЕзидент
+прЕтензия
+прЕзумпция
+прЕвентативный
+прЕлат
+прЕвалировать
+прЕзидиум
+прЕтендент
+прЕферанс
+прЕцедент
+прЕпарат
+прЕодолеть
+`.trim().split("\n");
+function parseWord(word) {
+    const chars = [...word];
+    const check = [];
+
+    chars.forEach((ch, i) => {
+        if (ch === ch.toUpperCase() && ch.match(/[А-ЯЁ]/)) {
+            check.push(i);
+        }
+    });
+
+    return {
+        word: word.toLowerCase(),
+        check
+    };
+}
+
+let wordsData = rawWords.map(parseWord);
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+shuffle(wordsData);
+
+const container = document.getElementById('wordsContainer');
+const wordElements = [];
+
+wordsData.forEach(data => {
+    const div = document.createElement('div');
+    div.className = 'word';
+
+    [...data.word].forEach((ch, i) => {
+        if (data.check.includes(i)) {
+            const span = document.createElement('span');
+            span.className = 'letter';
+            span.dataset.correct = ch;
+            span.innerHTML = '&nbsp;';
+            div.appendChild(span);
+        } else {
+            div.appendChild(document.createTextNode(ch));
+        }
+    });
+
+    const input = document.createElement('input');
+    input.className = 'hiddenInput';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+
+    div.appendChild(input);
+    container.appendChild(div);
+    wordElements.push(div);
+});
+
+let currentWord = 0;
+let currentLetter = 0;
+
+function activateWord(index) {
+    if (index >= wordElements.length) return;
+    wordElements[index].classList.add('active');
+    wordElements[index].querySelector('.hiddenInput').focus();
+}
+
+activateWord(0);
+
+wordElements.forEach((wordDiv, wordIndex) => {
+    const input = wordDiv.querySelector('.hiddenInput');
+    const letters = wordDiv.querySelectorAll('.letter');
+
+    wordDiv.addEventListener('click', () => {
+        input.focus();
+    });
+
+    input.addEventListener('input', () => {
+        const value = input.value.toLowerCase();
+        input.value = '';
+
+        if (!value || currentWord !== wordIndex) return;
+
+        const span = letters[currentLetter];
+        if (!span) return;
+
+        const correct = span.dataset.correct;
+
+        span.textContent = correct;
+        span.classList.add(value === correct ? 'correct' : 'wrong');
+
+        currentLetter++;
+
+        if (currentLetter >= letters.length) {
+            wordDiv.classList.remove('active');
+            currentWord++;
+            currentLetter = 0;
+            activateWord(currentWord);
+        }
+    });
+});
+</script>
+
+</body>
+</html>
