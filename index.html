@@ -1,0 +1,296 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Словарные слова</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            background: #f9f9f9;
+        }
+        #wordsContainer {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .word {
+            font-size: 2em;
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .letter {
+            display: inline-block;
+            width: 1ch;
+            text-align: center;
+            padding: 5px;
+            border-bottom: 2px solid gray;
+        }
+        .correct {
+            color: green;
+            border-color: green;
+            font-weight: bold;
+        }
+        .wrong {
+            color: red;
+            border-color: red;
+            font-weight: bold;
+        }
+        .active {
+            background: #ffff99;
+        }
+        .hiddenInput {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border: 1px;
+            outline: none;
+            background: transparent;
+            color: transparent;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Словарные слова</h1>
+<div id="wordsContainer"></div>
+
+<script>
+    const rawWords = `
+абИтурИент
+абонЕмент
+абрИкос
+абрИкосовый
+акАдемия
+акАдемичЕский
+аквАмарин
+аквАрель
+аквАрельный
+аккОмпАнЕмент
+аккОмпАнИровать
+аккОмпАнИатор
+аннОтация
+АнтрЕсоли
+АпЕлляция
+АпЕллировать
+аплОдировать
+аплОдисменты
+аппАратУра
+аппЕтИт
+арОмат
+арОматный
+архИтектор
+архИтектура
+асфАльт
+Асфальтировать
+АтмОсфера
+АтмОсферный
+АттрАкцИон
+аукцИон
+бАгаж
+бАгажный
+бАгровый
+бАгроветь
+бАгряный
+бАдмИнтон
+бАланс
+бАлансировать
+бАлкон
+бАлконный
+бАрельеф
+бАскетбол
+бАскетбольный
+бАссейн
+бЕрёза
+бЕрёзовый
+бЕречь
+бИрЮзовый
+бОгатый
+бОгатство
+бОгатырь
+брОшюра
+брОшюровать
+бЮллетень
+вАкцина
+вАкцИнация
+вАкцИнировать
+вАриант
+вАриативный
+вЕлОсИпед
+вЕлОсИпедный
+вЕнтИлятор
+вЕнтИляторный
+вЕрмИшель
+вЕстИбюль
+вЕтЕран
+вЕтЕранский
+вИнЕгрет
+вИртуальный
+вИртуоз
+вИртуозный
+вИтраж
+вИтражный
+влАделец
+влАдеть
+вОзражать
+вОзрАжение
+вОкзал
+вОкзальный
+вОлЕйбол
+вОлЕйбольный
+вОображать
+вОображение
+вОплОтить
+вОплОщать
+вОплОщение
+впЕчАтлить
+впЕчАтление
+вырАзитЕльный
+вырАзить
+вырАжать
+вырАжение
+гАзон
+гАлактика
+гАлактический
+гАлЕрея
+гАрмония
+гАрмОничный
+гАрнИзон
+гЕолог
+гЕологический
+гЕология
+гЕрой
+гЕроизм
+гЕроический
+гИпотеза
+гИпОтетический
+гОрмон
+гОрячий
+гОризонт
+гОризонтальный
+грАмМатика
+грАмМатический
+грамОта
+грамОтный
+грОмадный
+грОмоздкий
+грОмОздить
+    `.split(/\s|,\s*/).filter(w => w.length > 0);
+
+    function parseWord(word) {
+        const letters = [...word];
+        const check = [];
+        letters.forEach((ch, i) => {
+            if (ch === ch.toUpperCase() && ch.match(/[А-ЯЁ]/)) {
+                check.push(i);
+            }
+        });
+        return { word: word.toLowerCase(), check: check };
+    }
+
+    let wordsData = rawWords.map(parseWord);
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    wordsData = shuffle(wordsData);
+
+    const container = document.getElementById("wordsContainer");
+
+    const words = wordsData.map(data => {
+        const div = document.createElement("div");
+        div.className = "word";
+
+        [...data.word].forEach((ch, i) => {
+            const span = document.createElement("span");
+            if (data.check.includes(i)) {
+                span.className = "letter";
+                span.dataset.correct = ch;
+                span.innerHTML = "&nbsp;";
+            } else {
+                span.textContent = ch;
+            }
+            div.appendChild(span);
+        });
+
+        const input = document.createElement("input");
+        input.className = "hiddenInput";
+        input.autocomplete = "off";
+        input.autocorrect = "off";
+        input.autocapitalize = "none";
+        input.spellcheck = false;
+        div.appendChild(input);
+
+        container.appendChild(div);
+        return div;
+    });
+
+    let currentWord = 0;
+    let currentLetterIndex = 0;
+    let checkLetters = words[currentWord].querySelectorAll(".letter");
+
+    words[currentWord].classList.add("active");
+    words[currentWord].querySelector(".hiddenInput").focus();
+
+    function focusCurrentWordInput() {
+        const input = words[currentWord].querySelector(".hiddenInput");
+        if (input) input.focus();
+    }
+
+    words.forEach(wordDiv => {
+        wordDiv.addEventListener('click', () => {
+            focusCurrentWordInput();
+        });
+
+        const input = wordDiv.querySelector(".hiddenInput");
+        input.addEventListener("input", () => {
+            const value = input.value.toLowerCase();
+            input.value = "";
+
+            if (!value || !checkLetters.length) return;
+
+            const span = checkLetters[currentLetterIndex];
+            const correct = span.dataset.correct;
+
+            if (value === correct) {
+                span.textContent = correct;
+                span.classList.add("correct");
+            } else {
+                span.textContent = correct;
+                span.classList.add("wrong");
+            }
+
+            currentLetterIndex++;
+
+            if (currentLetterIndex >= checkLetters.length) {
+                words[currentWord].classList.remove("active");
+                currentWord++;
+                currentLetterIndex = 0;
+
+                if (currentWord < words.length) {
+                    checkLetters = words[currentWord].querySelectorAll(".letter");
+                    words[currentWord].classList.add("active");
+                    focusCurrentWordInput();
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>
