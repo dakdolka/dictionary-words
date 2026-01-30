@@ -1,0 +1,176 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace;
+    background: #f9f9f9;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px 60px 10px;
+}
+
+h1 {
+    font-size: 3rem;
+    margin: 0 0 20px 0;
+    text-align: center;
+    width: 100%;
+    max-width: 700px;
+}
+
+main {
+    width: 100%;
+    max-width: 700px;
+}
+
+/* Панель кнопок */
+.controls {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    gap: 10px;
+    justify-content: center; /* по правому краю */
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+button {
+    cursor: pointer;
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+/* Статистика */
+#stats, .stats {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: left;
+}
+
+/* Общий стиль слова (для всех тренажёров) */
+.word {
+    font-size: 1.8em;
+    margin: 18px 0;
+    position: relative;
+    cursor: pointer;
+    text-align: left;
+}
+
+/* Буквы-слоты (ПРЕ/ПРИ, словарные, орфоэпия) */
+.letter {
+    display: inline-block;
+    width: 1.3ch;
+    text-align: center;
+    border-bottom: 2px solid gray;
+    margin: 0 1px;
+    position: relative;
+}
+
+.correct {
+    color: green;
+    border-color: green;
+    font-weight: bold;
+}
+
+.wrong-slot {
+    color: red;
+    border-color: red;
+    font-weight: bold;
+}
+
+.wrong-inner {
+    text-decoration: line-through;
+}
+
+.active {
+    background: #fff3a0;
+}
+
+.hiddenInput {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    opacity: 0;
+}
+
+/* Попап ошибок */
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popup {
+    background: white;
+    padding: 20px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 16px;
+}
+
+.popup h2 {
+    margin-top: 0;
+    text-align: right;
+}
+
+.popup-word {
+    margin: 6px 0;
+    text-align: right;
+}
+
+.popup-word .green {
+    color: green;
+    font-weight: bold;
+}
+
+.popup-close {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.popup-close button {
+    padding: 6px 14px;
+}
+
+/* Нижний футер для орфоэпии */
+footer {
+    width: 100%;
+    max-width: 700px;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    font-size: 14px;
+    text-align: right;
+}
+
+#mistakes_coun {
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2rem;
+    }
+    .word {
+        font-size: 1.5em;
+    }
+}

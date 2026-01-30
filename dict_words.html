@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Словарные слова</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+</head>
+<body>
+
+<h1>Словарные слова</h1>
+
+<div class="controls">
+    <button id="resetBtnTop">Сбросить</button>
+    <button id="showMistakesBtnTop">Показать ошибки</button>
+</div>
+
+<div id="stats">
+    Всего букв: <span id="totalSlots">0</span>,
+    верно: <span id="correctCount">0</span>,
+    ошибок: <span id="wrongCount">0</span>,
+    точность: <span id="accuracy">0</span>%
+</div>
+
+<main id="wordsContainer"></main>
+
+<div class="controls">
+    <button id="resetBtnBottom">Сбросить</button>
+    <button id="showMistakesBtnBottom">Показать ошибки</button>
+</div>
+
+<div id="mistakesPopupOverlay" class="popup-overlay">
+    <div class="popup">
+        <h2>Ошибки</h2>
+        <div id="mistakesList"></div>
+        <div class="popup-close">
+            <button id="closeMistakesPopup">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script src="script/dict_words.js"></script>
+</body>
+</html>

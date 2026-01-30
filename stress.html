@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Орфоэпический тест</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+</head>
+<body>
+
+<h1>Орфоэпический тест</h1>
+
+<div class="controls">
+    <button id="resetTop">Сбросить</button>
+    <button id="showMistakesTop">Показать ошибки</button>
+</div>
+
+<div id="stats">
+    Всего слов: <span id="totalWords">0</span>,
+    верно: <span id="correctWords">0</span>,
+    ошибок: <span id="wrongWords">0</span>,
+    точность: <span id="accuracy">0</span>%
+</div>
+
+<main></main>
+
+<div class="controls">
+    <button id="resetBottom">Сбросить</button>
+    <button id="showMistakesBottom">Показать ошибки</button>
+</div>
+
+<div id="mistakesPopupOverlay" class="popup-overlay">
+    <div class="popup">
+        <h2>Ошибки</h2>
+        <div id="mistakesList"></div>
+        <div class="popup-close">
+            <button id="closeMistakesPopup">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<script src="script/stress.js"></script>
+</body>
+</html>
