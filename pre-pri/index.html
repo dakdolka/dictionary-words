@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>ПРЕ / ПРИ — тренажёр</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body {
     font-family: 'Courier New', monospace;
@@ -15,6 +14,27 @@ body {
 
 h1 {
     text-align: center;
+}
+
+.controls {
+    max-width: 700px;
+    margin: 0 auto 10px auto;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#stats {
+    max-width: 700px;
+    margin: 0 auto 15px auto;
+    font-size: 14px;
 }
 
 #wordsContainer {
@@ -35,6 +55,7 @@ h1 {
     text-align: center;
     border-bottom: 2px solid gray;
     margin: 0 1px;
+    position: relative;
 }
 
 .correct {
@@ -43,10 +64,59 @@ h1 {
     font-weight: bold;
 }
 
-.wrong {
+.wrong-slot {
     color: red;
     border-color: red;
     font-weight: bold;
+}
+
+.wrong-inner {
+    text-decoration: line-through;
+}
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popup {
+    background: white;
+    padding: 20px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-size: 16px;
+}
+
+.popup h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.popup-word {
+    margin: 6px 0;
+}
+
+.popup-word .green {
+    color: green;
+    font-weight: bold;
+}
+
+.popup-close {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.popup-close button {
+    padding: 6px 14px;
 }
 
 .active {
@@ -66,10 +136,41 @@ h1 {
 <body>
 
 <h1>ПРЕ / ПРИ</h1>
+
+<div class="controls">
+    <button id="resetBtnTop">Сбросить</button>
+    <button id="showMistakesBtnTop">Показать ошибки</button>
+</div>
+
+<div id="stats">
+    Всего слов: <span id="totalSlots">0</span>,
+    верно: <span id="correctCount">0</span>,
+    ошибок: <span id="wrongCount">0</span>,
+    точность: <span id="accuracy">0</span>%
+</div>
+
 <div id="wordsContainer"></div>
 
+<div class="controls">
+    <button id="resetBtnBottom">Сбросить</button>
+    <button id="showMistakesBtnBottom">Показать ошибки</button>
+</div>
+
+<!-- Попап ошибок -->
+<div id="mistakesPopupOverlay" class="popup-overlay">
+    <div class="popup">
+        <h2>Ошибки</h2>
+        <div id="mistakesList"></div>
+        <div class="popup-close">
+            <button id="closeMistakesPopup">Закрыть</button>
+        </div>
+    </div>
+</div>
+
 <script>
-const fixedWords = `
+const STORAGE_KEY = 'pre_pri_trainer_state_v2';
+
+const wordsRaw = `
 прИбывать в город
 прЕбывать в городе
 прИзреть сироту
@@ -175,23 +276,45 @@ const fixedWords = `
 прЕпарат
 прЕодолеть
 `.trim().split("\n");
+
 function parseWord(word) {
     const chars = [...word];
     const check = [];
-
     chars.forEach((ch, i) => {
-        if (ch === ch.toUpperCase() && ch.match(/[А-ЯЁ]/)) {
+        if (ch.match(/[А-ЯЁ]/)) {
             check.push(i);
         }
     });
-
     return {
-        word: word.toLowerCase(),
+        original: word,
+        lower: word.toLowerCase(),
         check
     };
 }
 
-let wordsData = rawWords.map(parseWord);
+let wordsData = [];
+let wordElements = [];
+let currentWord = 0;
+let currentLetter = 0;
+
+let totalSlots = 0;
+let correctCount = 0;
+let wrongCount = 0;
+
+const container = document.getElementById('wordsContainer');
+const totalSlotsSpan = document.getElementById('totalSlots');
+const correctCountSpan = document.getElementById('correctCount');
+const wrongCountSpan = document.getElementById('wrongCount');
+const accuracySpan = document.getElementById('accuracy');
+
+const resetBtnTop = document.getElementById('resetBtnTop');
+const showMistakesBtnTop = document.getElementById('showMistakesBtnTop');
+const resetBtnBottom = document.getElementById('resetBtnBottom');
+const showMistakesBtnBottom = document.getElementById('showMistakesBtnBottom');
+
+const mistakesPopupOverlay = document.getElementById('mistakesPopupOverlay');
+const mistakesList = document.getElementById('mistakesList');
+const closeMistakesPopup = document.getElementById('closeMistakesPopup');
 
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -199,79 +322,310 @@ function shuffle(arr) {
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
 }
-shuffle(wordsData);
 
-const container = document.getElementById('wordsContainer');
-const wordElements = [];
-
-wordsData.forEach(data => {
-    const div = document.createElement('div');
-    div.className = 'word';
-
-    [...data.word].forEach((ch, i) => {
-        if (data.check.includes(i)) {
-            const span = document.createElement('span');
-            span.className = 'letter';
-            span.dataset.correct = ch;
-            span.innerHTML = '&nbsp;';
-            div.appendChild(span);
-        } else {
-            div.appendChild(document.createTextNode(ch));
-        }
-    });
-
-    const input = document.createElement('input');
-    input.className = 'hiddenInput';
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-
-    div.appendChild(input);
-    container.appendChild(div);
-    wordElements.push(div);
-});
-
-let currentWord = 0;
-let currentLetter = 0;
-
-function activateWord(index) {
-    if (index >= wordElements.length) return;
-    wordElements[index].classList.add('active');
-    wordElements[index].querySelector('.hiddenInput').focus();
+function updateStats() {
+    totalSlotsSpan.textContent = totalSlots;
+    correctCountSpan.textContent = correctCount;
+    wrongCountSpan.textContent = wrongCount;
+    const acc = totalSlots ? Math.round((correctCount / totalSlots) * 100) : 0;
+    accuracySpan.textContent = acc;
 }
 
-activateWord(0);
+function initData() {
+    wordsData = wordsRaw.map(parseWord);
+    shuffle(wordsData);
+}
 
-wordElements.forEach((wordDiv, wordIndex) => {
-    const input = wordDiv.querySelector('.hiddenInput');
-    const letters = wordDiv.querySelectorAll('.letter');
+function saveState() {
+    const state = {
+        wordsData,
+        totalSlots,
+        correctCount,
+        wrongCount,
+        letters: wordElements.map(obj => {
+            return Array.from(obj.letters).map(span => ({
+                correct: span.dataset.correct,
+                done: span.dataset.done || '0',
+                result: span.dataset.result || '',
+                userChar: span.dataset.userChar || ''
+            }));
+        })
+    };
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+}
 
-    wordDiv.addEventListener('click', () => {
-        input.focus();
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch (e) {
+        return null;
+    }
+}
+
+function buildUI(fromState) {
+    container.innerHTML = '';
+    wordElements = [];
+    totalSlots = 0;
+    correctCount = 0;
+    wrongCount = 0;
+
+    wordsData.forEach((data, wordIndex) => {
+        const div = document.createElement('div');
+        div.className = 'word';
+
+        const charsLower = [...data.lower];
+        let letterIndex = 0;
+
+        charsLower.forEach((ch, i) => {
+            if (data.check.includes(i)) {
+                const span = document.createElement('span');
+                span.className = 'letter';
+                span.dataset.correct = charsLower[i];
+
+                let stateForSpan = null;
+                if (fromState && fromState.letters && fromState.letters[wordIndex]) {
+                    stateForSpan = fromState.letters[wordIndex][letterIndex] || null;
+                }
+
+                if (stateForSpan) {
+                    span.dataset.done = stateForSpan.done;
+                    span.dataset.result = stateForSpan.result;
+                    span.dataset.userChar = stateForSpan.userChar;
+
+                    if (stateForSpan.done === '1') {
+                        if (stateForSpan.result === 'right') {
+                            span.textContent = span.dataset.correct;
+                            span.classList.add('correct');
+                            correctCount++;
+                        } else if (stateForSpan.result === 'wrong') {
+                            span.classList.add('wrong-slot');
+                            const inner = document.createElement('span');
+                            inner.textContent = span.dataset.correct;
+                            inner.classList.add('wrong-inner');
+                            span.appendChild(inner);
+                            wrongCount++;
+                        }
+                    } else {
+                        span.innerHTML = '&nbsp;';
+                    }
+                } else {
+                    span.innerHTML = '&nbsp;';
+                }
+
+                div.appendChild(span);
+                letterIndex++;
+                totalSlots++;
+            } else {
+                div.appendChild(document.createTextNode(charsLower[i]));
+            }
+        });
+
+        const input = document.createElement('input');
+        input.className = 'hiddenInput';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        div.appendChild(input);
+        container.appendChild(div);
+        wordElements.push({ div, input, letters: div.querySelectorAll('.letter') });
     });
 
-    input.addEventListener('input', () => {
-        const value = input.value.toLowerCase();
-        input.value = '';
+    // если было сохранённое состояние, пересчёт из него
+    if (fromState) {
+        totalSlots = fromState.totalSlots;
+        correctCount = fromState.correctCount;
+        wrongCount = fromState.wrongCount;
+    }
 
-        if (!value || currentWord !== wordIndex) return;
+    updateStats();
+    focusFirstEmpty();
+}
 
-        const span = letters[currentLetter];
-        if (!span) return;
-
-        const correct = span.dataset.correct;
-
-        span.textContent = correct;
-        span.classList.add(value === correct ? 'correct' : 'wrong');
-
-        currentLetter++;
-
-        if (currentLetter >= letters.length) {
-            wordDiv.classList.remove('active');
-            currentWord++;
-            currentLetter = 0;
-            activateWord(currentWord);
+function focusFirstEmpty() {
+    let found = false;
+    for (let w = 0; w < wordElements.length; w++) {
+        const letters = wordElements[w].letters;
+        for (let i = 0; i < letters.length; i++) {
+            const span = letters[i];
+            if (span.dataset.done !== '1') {
+                currentWord = w;
+                currentLetter = i;
+                wordElements.forEach(obj => obj.div.classList.remove('active'));
+                wordElements[w].div.classList.add('active');
+                wordElements[w].input.focus();
+                found = true;
+                break;
+            }
         }
+        if (found) break;
+    }
+    if (!found && wordElements.length) {
+        currentWord = 0;
+        currentLetter = 0;
+        wordElements[0].div.classList.add('active');
+        wordElements[0].input.focus();
+    }
+}
+
+function attachHandlers() {
+    wordElements.forEach((obj, wordIndex) => {
+        const { div, input, letters } = obj;
+
+        div.addEventListener('click', () => {
+            input.focus();
+        });
+
+        input.oninput = () => {
+            const value = input.value.toLowerCase();
+            input.value = '';
+
+            if (!value) return;
+
+            // если слово уже полностью заполнено, ничего не делаем
+            let hasEmptyHere = false;
+            letters.forEach(sp => {
+                if (sp.dataset.done !== '1') hasEmptyHere = true;
+            });
+            if (!hasEmptyHere) {
+                focusFirstEmpty();
+                return;
+            }
+
+            if (wordIndex !== currentWord) {
+                focusFirstEmpty();
+                return;
+            }
+
+            const span = letters[currentLetter];
+            if (!span) {
+                focusFirstEmpty();
+                return;
+            }
+
+            const correct = span.dataset.correct;
+
+            if (span.dataset.done === '1') {
+                focusFirstEmpty();
+                return;
+            }
+
+            span.innerHTML = '';
+
+            if (value === correct) {
+                span.textContent = correct;
+                span.classList.add('correct');
+                span.dataset.done = '1';
+                span.dataset.result = 'right';
+                span.dataset.userChar = value;
+                correctCount++;
+            } else {
+                span.classList.add('wrong-slot');
+                const inner = document.createElement('span');
+                inner.textContent = correct;
+                inner.classList.add('wrong-inner');
+                span.appendChild(inner);
+
+                span.dataset.done = '1';
+                span.dataset.result = 'wrong';
+                span.dataset.userChar = value;
+                wrongCount++;
+            }
+
+            updateStats();
+            saveState();
+
+            currentLetter++;
+            if (currentLetter >= letters.length) {
+                wordElements[wordIndex].div.classList.remove('active');
+                focusFirstEmpty();
+            }
+        };
     });
+}
+
+function collectMistakes() {
+    const mistakes = [];
+    wordElements.forEach((obj, wordIndex) => {
+        const letters = obj.letters;
+        let wordHasError = false;
+        letters.forEach(span => {
+            if (span.dataset.result === 'wrong') wordHasError = true;
+        });
+        if (!wordHasError) return;
+
+        const original = wordsData[wordIndex].lower;
+        const chars = [...original];
+        const capsPositions = wordsData[wordIndex].check;
+
+        let resultHtml = '';
+        chars.forEach((ch, i) => {
+            if (capsPositions.includes(i)) {
+                resultHtml += `<span class="green">${ch.toUpperCase()}</span>`;
+            } else {
+                resultHtml += ch;
+            }
+        });
+
+        mistakes.push(resultHtml);
+    });
+    return mistakes;
+}
+
+function showMistakesPopup() {
+    const mistakes = collectMistakes();
+    mistakesList.innerHTML = '';
+
+    if (!mistakes.length) {
+        mistakesList.innerHTML = '<div>Ошибок нет.</div>';
+    } else {
+        mistakes.forEach(html => {
+            const div = document.createElement('div');
+            div.className = 'popup-word';
+            div.innerHTML = html;
+            mistakesList.appendChild(div);
+        });
+    }
+
+    mistakesPopupOverlay.style.display = 'flex';
+}
+
+function hideMistakesPopup() {
+    mistakesPopupOverlay.style.display = 'none';
+}
+
+function resetAll() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+    initData();
+    buildUI(null);
+    attachHandlers();
+}
+
+(function start() {
+    const loaded = loadState();
+    if (!loaded) {
+        initData();
+        buildUI(null);
+    } else {
+        wordsData = loaded.wordsData && loaded.wordsData.length
+            ? loaded.wordsData
+            : wordsRaw.map(parseWord);
+        buildUI(loaded);
+    }
+    attachHandlers();
+})();
+
+resetBtnTop.addEventListener('click', resetAll);
+resetBtnBottom.addEventListener('click', resetAll);
+showMistakesBtnTop.addEventListener('click', showMistakesPopup);
+showMistakesBtnBottom.addEventListener('click', showMistakesPopup);
+closeMistakesPopup.addEventListener('click', hideMistakesPopup);
+mistakesPopupOverlay.addEventListener('click', (e) => {
+    if (e.target === mistakesPopupOverlay) hideMistakesPopup();
 });
 </script>
 
